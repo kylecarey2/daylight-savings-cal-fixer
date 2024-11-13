@@ -58,7 +58,18 @@ int main(int argc, char const *argv[]) {
         exit(0);
     }
 
+    /// Record header of calendar
+    string header = "";
+    string temp;
 
+    while (inputCal >> temp) {
+        if (temp.compare("BEGIN:VEVENT") == 0) {
+            break;
+        }
+        header = header + temp + "\n";
+    }
+
+    ///
 
 
     /// Close files
