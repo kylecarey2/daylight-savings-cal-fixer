@@ -24,6 +24,7 @@ struct Event {
 };
 
 void readEvents(ifstream &in, vector<Event> &events);
+void incrementHours(vector<Event> &events);
 
 
 
@@ -75,11 +76,12 @@ int main(int argc, char const *argv[]) {
     /// Record each event
     vector<Event> allEvents;
     readEvents(inputCal, allEvents);
+    incrementHours(allEvents);
 
 
-    for (int i = 0; i < allEvents.size(); i++) {
-        cout << allEvents[i].summary << " - " << allEvents[i].dtStart << " - " << allEvents[i].rule << endl;
-    }
+    // for (int i = 0; i < allEvents.size(); i++) {
+    //     cout << allEvents[i].summary << " - " << allEvents[i].dtStart << " - " << allEvents[i].rule << endl;
+    // }
 
     /// Close files
     inputCal.close();
@@ -117,5 +119,21 @@ void readEvents(ifstream &in, vector<Event> &events) {
         /// Create an Event object and push it to vector of Event objects
         Event e = {id, summary, stamp, start, des, loc, rule, dur};
         events.push_back(e);
+    }
+}
+
+void incrementHours(vector<Event> &events) {
+    for (size_t i = 0; i < events.size(); i++) {
+        /// Extract hours part of dtStart and increment it by 1 to represent daylight savings
+        string sub = events[i].dtStart.substr(17, 2);
+        int hour = stoi(sub);
+        hour++;
+        if (hour == 25) {
+            hour = 0;
+        }
+
+        /// Place incremented hour back into dtStart
+        sub = to_string(hour);
+        events[i].dtStart.replace(17, 2, sub);
     }
 }
