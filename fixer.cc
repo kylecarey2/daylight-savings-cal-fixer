@@ -23,6 +23,8 @@ struct Event {
     string duration;
 };
 
+void readEvents(ifstream &in, vector<Event> &events);
+
 
 
 int main(int argc, char const *argv[]) {
@@ -68,12 +70,52 @@ int main(int argc, char const *argv[]) {
         }
         header = header + temp + "\n";
     }
+    inputCal.ignore(100, '\n');
 
-    ///
+    /// Record each event
+    vector<Event> allEvents;
+    readEvents(inputCal, allEvents);
 
+
+    for (int i = 0; i < allEvents.size(); i++) {
+        cout << allEvents[i].summary << " - " << allEvents[i].dtStart << " - " << allEvents[i].rule << endl;
+    }
 
     /// Close files
     inputCal.close();
     outputCal.close();
     return 0;
 }  /// main
+
+void readEvents(ifstream &in, vector<Event> &events) {
+    string id, summary, stamp, start, des, loc, rule, dur, temp;
+    while (getline(in, id)) {
+        /// Read each line
+        getline(in, summary);
+        getline(in, stamp);
+        getline(in, start);
+        getline(in, des);
+        getline(in, loc);
+        getline(in, rule);
+        getline(in, dur);
+
+        /// Remove the carriage return character from each string
+        id = id.substr(0, id.length() - 1);
+        summary = summary.substr(0, summary.length() - 1);
+        stamp = stamp.substr(0, stamp.length() - 1);
+        start = start.substr(0, start.length() - 1);
+        des = des.substr(0, des.length() - 1);
+        loc = loc.substr(0, loc.length() - 1);
+        rule = rule.substr(0, rule.length() - 1);
+        dur = dur.substr(0, dur.length() - 1);
+
+        
+        /// Read end/begin of events into temp vars and then place pointer at beginning of new line
+        in >> temp >> temp;
+        in.ignore(2, '\n');
+        
+        /// Create an Event object and push it to vector of Event objects
+        Event e = {id, summary, stamp, start, des, loc, rule, dur};
+        events.push_back(e);
+    }
+}
