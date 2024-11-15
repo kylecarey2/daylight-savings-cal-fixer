@@ -25,6 +25,7 @@ struct Event {
 
 void readEvents(ifstream &in, vector<Event> &events);
 void incrementHours(vector<Event> &events);
+void outputNewCal(ofstream &out, const vector<Event> &events, const string &header);
 
 
 
@@ -69,7 +70,7 @@ int main(int argc, char const *argv[]) {
         if (temp.compare("BEGIN:VEVENT") == 0) {
             break;
         }
-        header = header + temp + "\n";
+        header = header + temp + "\r\n";
     }
     inputCal.ignore(100, '\n');
 
@@ -77,11 +78,7 @@ int main(int argc, char const *argv[]) {
     vector<Event> allEvents;
     readEvents(inputCal, allEvents);
     incrementHours(allEvents);
-
-
-    // for (int i = 0; i < allEvents.size(); i++) {
-    //     cout << allEvents[i].summary << " - " << allEvents[i].dtStart << " - " << allEvents[i].rule << endl;
-    // }
+    outputNewCal(outputCal, allEvents, header);
 
     /// Close files
     inputCal.close();
@@ -136,4 +133,21 @@ void incrementHours(vector<Event> &events) {
         sub = to_string(hour);
         events[i].dtStart.replace(17, 2, sub);
     }
+}
+
+void outputNewCal(ofstream &out, const vector<Event> &events, const string &header) {
+    out << header;
+    for (size_t i = 0; i < events.size(); i++) {
+        out << "BEGIN:VEVENT\r\n";
+        out << events[i].id << "\r\n";
+        out << events[i].summary << "\r\n";
+        out << events[i].dtStamp << "\r\n";
+        out << events[i].dtStart << "\r\n";
+        out << events[i].description << "\r\n";
+        out << events[i].location << "\r\n";
+        out << events[i].rule << "\r\n";
+        out << events[i].duration << "\r\n";
+        out << "END:VEVENT\r\n";
+    }
+    out << "END:VCALENDAR\r\n";
 }
