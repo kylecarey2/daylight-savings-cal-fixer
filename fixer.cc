@@ -1,7 +1,7 @@
 /**
  *        @file: fixer.cc
  *      @author: Kyle Carey
- *        @date: November 13, 2024
+ *        @date: November 23, 2024
  *       @brief: Add Description
  */
 
@@ -12,6 +12,7 @@
 #include <vector>
 using namespace std;
 
+/// Event structure that holds the data for an event
 struct Event {
     string id;
     string summary;
@@ -23,11 +24,38 @@ struct Event {
     string duration;
 };
 
+/**
+ * Function:    readEvents
+ *              this function reads all the events of the input file into a Event structure and then adds it to a vector
+ *
+ * @param in - input stream of the input file
+ * @param events - vector of Event structures
+ * @return - void
+ */
 void readEvents(ifstream &in, vector<Event> &events);
-void incrementHours(vector<Event> &events);
+
+/**
+ * Function:    convertToEST
+ *              function takes a vector of Event structures and converts the time attributes to EST time
+ *
+ * @param events - vector of Event structures
+ * @return - void
+ */
+void convertToEST(vector<Event> &events);
+
+/**
+ * Function:    outputNewCal
+ *              function outputs the new calendar to the specified output file in iCal format
+ *
+ * @param out - output stream
+ * @param events - vector of Event structures
+ * @param header - string of the header of the file
+ * @return - void
+ */
 void outputNewCal(ofstream &out, const vector<Event> &events, const string &header);
 
-
+/// String of timezone configuration needed for EST/EDT
+const string TZ = "BEGIN:VTIMEZONE\r\nTZID:America/New_York\r\nX-LIC-LOCATION:America/New_York\r\nBEGIN:DAYLIGHT\r\nTZOFFSETFROM:-0500\r\nTZOFFSETTO:-0400\r\nTZNAME:EDT\r\nDTSTART:19700308T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nTZOFFSETFROM:-0400\r\nTZOFFSETTO:-0500\r\nTZNAME:EST\r\nDTSTART:19701101T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\n";
 
 int main(int argc, char const *argv[]) {
     /// Check for proper usage and set inputFilename to calendar filename
@@ -67,17 +95,18 @@ int main(int argc, char const *argv[]) {
     string temp;
 
     while (inputCal >> temp) {
+        /// Goes until line read is beginning of an event. This 
         if (temp.compare("BEGIN:VEVENT") == 0) {
             break;
         }
-        header = header + temp + "\r\n";
+        header = header + temp + "\r\n"; // adds to header string with proper endings between each line
     }
     inputCal.ignore(100, '\n');
 
-    /// Record each event
+    /// Record each event, convert each event to EST, then output header, timezone info, and events to output file
     vector<Event> allEvents;
     readEvents(inputCal, allEvents);
-    incrementHours(allEvents);
+    convertToEST(allEvents);
     outputNewCal(outputCal, allEvents, header);
 
     /// Close files
@@ -87,6 +116,7 @@ int main(int argc, char const *argv[]) {
 }  /// main
 
 void readEvents(ifstream &in, vector<Event> &events) {
+    /// Declare vars to read into
     string id, summary, stamp, start, des, loc, rule, dur, temp;
     while (getline(in, id)) {
         /// Read each line
@@ -108,7 +138,6 @@ void readEvents(ifstream &in, vector<Event> &events) {
         rule = rule.substr(0, rule.length() - 1);
         dur = dur.substr(0, dur.length() - 1);
 
-        
         /// Read end/begin of events into temp vars and then place pointer at beginning of new line
         in >> temp >> temp;
         in.ignore(2, '\n');
@@ -119,24 +148,68 @@ void readEvents(ifstream &in, vector<Event> &events) {
     }
 }
 
-void incrementHours(vector<Event> &events) {
+
+void convertToEST(vector<Event> &events) {
+    /// Creates new datetime start for each event (when to start event for EST) (for starting time)
     for (size_t i = 0; i < events.size(); i++) {
-        /// Extract hours part of dtStart and increment it by 1 to represent daylight savings
-        string sub = events[i].dtStart.substr(17, 2);
-        int hour = stoi(sub);
-        hour++;
-        if (hour == 25) {
-            hour = 0;
+        /// Create substring of current time in UTC
+        string time = "DTSTART;TZID=America/New_York:";
+        string sub = events[i].dtStart.substr(8, 15);
+        string hourString = sub.substr(9, 2); // extract hours in UTC from substring of datetime information
+        int hour = stoi(hourString);
+        
+        /// Convert UTC hours to EST equivalent
+        hour = hour - 4;
+        if (hour < 0) {
+            hour = hour + 24;
         }
 
-        /// Place incremented hour back into dtStart
-        sub = to_string(hour);
-        events[i].dtStart.replace(17, 2, sub);
+        /// Convert back to string and insert leading zero if necessary
+        hourString = to_string(hour);
+
+        if (hourString.length() == 1) {
+            hourString.insert(hourString.begin(), '0');
+        }
+
+        /// Insert new hour back into substring of datetime and add it to new DTSTART (time) then replace Event's dtStart attribute with new time
+        sub.replace(9, 2, hourString);
+        time += sub;
+        events[i].dtStart = time;   
+    }
+
+    /// Creates new datetime start for each event (when to start event for EST) (for ending time)
+    for (size_t i = 0; i < events.size(); i++) {
+        /// Create substring of current time in UTC
+        int index = events[i].rule.find("UNTIL=");
+        string sub = events[i].rule.substr(index + 6, 15);
+        string hourString = sub.substr(9, 2);
+        int hour = stoi(hourString);
+
+        /// Convert UTC hours to EST equivalent
+        hour = hour - 4;
+        if (hour < 0) {
+            hour = hour + 24;
+        }
+
+        /// Convert back to string and insert leading zero if necessary
+        hourString = to_string(hour);
+
+        if (hourString.length() == 1) {
+            hourString.insert(hourString.begin(), '0');
+        }
+
+        /// Replace ending time with new hour in EST 
+        sub.replace(9, 2, hourString);
+        events[i].rule.replace(index + 6, 15, sub);
     }
 }
 
 void outputNewCal(ofstream &out, const vector<Event> &events, const string &header) {
+    /// Output header and timezone configuration
     out << header;
+    out << TZ;
+
+    /// Output each event
     for (size_t i = 0; i < events.size(); i++) {
         out << "BEGIN:VEVENT\r\n";
         out << events[i].id << "\r\n";
