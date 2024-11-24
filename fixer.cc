@@ -2,7 +2,8 @@
  *        @file: fixer.cc
  *      @author: Kyle Carey
  *        @date: November 23, 2024
- *       @brief: Add Description
+ *       @brief: Takes the generated iCal for class schedules that are in UTC format and formats them in 
+ *               EST/EDT format to account for daylight savings time
  */
 
 #include <cstdlib>
