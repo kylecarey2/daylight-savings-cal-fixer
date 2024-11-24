@@ -112,6 +112,8 @@ int main(int argc, char const *argv[]) {
     /// Close files
     inputCal.close();
     outputCal.close();
+
+    cout << "Process ran successfully: new calendar in EST/EDT is \"" << outputFilename << "\"." << endl;
     return 0;
 }  /// main
 
