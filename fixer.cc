@@ -162,7 +162,14 @@ void convertToEST(vector<Event> &events) {
         int hour = stoi(hourString);
         
         /// Convert UTC hours to EST equivalent
-        hour = hour - 4;
+        int month = stoi(events.at(i).dtStamp.substr(12, 2));
+        if (month > 0 && month < 6) {
+            hour = hour - 5;
+        }
+        else {
+            hour = hour - 4;
+        }
+
         if (hour < 0) {
             hour = hour + 24;
         }
