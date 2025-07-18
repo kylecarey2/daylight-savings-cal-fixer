@@ -1,6 +1,6 @@
 # Daylight-Savings-iCal-Fixer
 
-The [Go Ohio app](go.ohio.edu) (a university class scheduling application) generates iCal files for class schedules that do not correctly account for daylight saving time. This program fixes the issue by adding the proper timezone information (TZID:America/New_York) and adjusting the class time information from UTC to Eastern Time (EST/EDT).
+The [Go Ohio app](https://go.ohio.edu/) (a university class scheduling application) generates iCal files for class schedules that do not correctly account for daylight saving time. This program fixes the issue by adding the proper timezone information (TZID:America/New_York) and adjusting the class time information from UTC to Eastern Time (EST/EDT).
 
 ## Compilation
 
